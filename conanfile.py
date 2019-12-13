@@ -1,7 +1,6 @@
 from conans import ConanFile, CMake, tools
-from conans.tools import download, unzip, Version
+from conans.tools import Version
 import os
-import shutil
 
 
 class FollyConan(ConanFile):
