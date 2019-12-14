@@ -42,7 +42,11 @@ class FollyConan(ConanFile):
             del self.options.shared
 
     def configure(self):
+        if self.settings.os == "Windows":
+            raise ConanInvalidConfiguration("The package currently doesn't support the Windows platform")
+
         compiler_version = Version(self.settings.compiler.version.value)
+
         if self.settings.os == "Linux":
             if self.settings.compiler == "clang":
                 if compiler_version < "6.0":
