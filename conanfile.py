@@ -27,7 +27,6 @@ class FollyConan(ConanFile):
         "zlib/1.2.11",
         "zstd/1.4.3",
         "openssl/1.1.1d",
-        "libunwind/1.3.1@bincrafters/stable",
         "libelf/0.8.13",
         "libdwarf/20190505@bincrafters/stable",
         "libsodium/1.0.18@bincrafters/stable"
@@ -59,6 +58,7 @@ class FollyConan(ConanFile):
 
     def requirements(self):
         if self.settings.os == "Linux":
+            self.requires("libunwind/1.3.1@bincrafters/stable")
             if self.settings.compiler == "gcc":
                 self.requires("libiberty/9.1.0@bincrafters/stable")
 
