@@ -20,7 +20,6 @@ class FollyConan(ConanFile):
         "libevent/2.1.11",
         "double-conversion/3.1.5",
         "glog/0.4.0",
-        "gflags/2.2.2",
         "lz4/1.9.2",
         "snappy/1.1.7",
         "lzma/5.2.4@bincrafters/stable",
@@ -58,9 +57,13 @@ class FollyConan(ConanFile):
 
     def requirements(self):
         if self.settings.os == "Linux":
+            self.requires("gflags/2.2.2")
             self.requires("libunwind/1.3.1@bincrafters/stable")
             if self.settings.compiler == "gcc":
                 self.requires("libiberty/9.1.0@bincrafters/stable")
+
+        if self.settings.os == "Macos":
+            self.requires("gflags/2.2.2@bincrafters/stable")
 
     @property
     def _source_folder_name(self):
@@ -93,13 +96,8 @@ class FollyConan(ConanFile):
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self) + ["folly"]
         if self.settings.os == "Linux":
-            self.cpp_info.libs.extend(["pthread", "dl"])
+            self.cpp_info.libs.extend(["pthread", "m", "dl"])
 
             if self.settings.compiler == "clang":
-                if Version(self.settings.compiler.version.value) == "6" and self.settings.compiler.libcxx == "libstdc++":
-                    self.cpp_info.libs.append("atomic")
-
-        if self.settings.os == "Macos":
-            if self.settings.compiler == "apple-clang":
-                if Version(self.settings.compiler.version.value) == "9.0" and self.settings.compiler.libcxx == "libc++":
+                if self.settings.compiler.libcxx == "libstdc++":
                     self.cpp_info.libs.append("atomic")
