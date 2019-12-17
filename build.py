@@ -1,9 +1,11 @@
 import platform
-from cpt.packager import ConanMultiPackager
+from bincrafters import build_template_default
 
 if __name__ == "__main__":
-    builder = ConanMultiPackager("morheit")
-    builder.add({"arch": "x86_64", "build_type": "Release"})
-    if (platform.system() == "Linux"):
-        builder.add({"arch": "x86_64", "build_type": "Release"}, {"folly:shared": True})
+    builder = build_template_default.get_builder(pure_c=False)
+
+    if platform.system() == "Linux":
+        builder.remove_build_if(lambda build: build.settings["compiler.libcxx"] == "libstdc++11" or
+                                              build.settings["compiler.libcxx"] == "libc++")
+
     builder.run()

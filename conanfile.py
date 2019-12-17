@@ -12,14 +12,13 @@ class FollyConan(ConanFile):
     license = "Apache-2.0"
     author = "Yaroslav Stanislavyk (stl.ros@outlook.com)"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False], "fPIC": [True, False]}
-    default_options = {"shared": False, "fPIC": True}
     requires = (
         "boost/1.71.0",
-        "bzip2/1.0.8@conan/stable",
+        "bzip2/1.0.8",
         "libevent/2.1.11",
         "double-conversion/3.1.5",
         "glog/0.4.0",
+        "gflags/2.2.2@bincrafters/stable",
         "lz4/1.9.2",
         "snappy/1.1.7",
         "lzma/5.2.4@bincrafters/stable",
@@ -32,14 +31,25 @@ class FollyConan(ConanFile):
     )
     exports = ["LICENSE"]
     exports_sources = ["patches/*.patch"]
-    generators = "cmake", "cmake_find_package"
+    generators = "cmake_paths"
 
-    def config_options(self):
-        if self.settings.os == "Windows":
-            del self.options.fPIC
-            del self.options.shared
-        elif self.settings.os == "Macos":
-            del self.options.shared
+
+    @property
+    def _source_subfolder(self):
+        return "source_subfolder"
+
+
+    @property
+    def _source_subfolder_path(self):
+        return (self.source_folder + ("/" + self._source_subfolder))
+
+
+    def _configure_cmake(self):
+        cmake = CMake(self)
+        cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = "conan_paths.cmake"
+        cmake.configure(source_folder=self._source_subfolder_path)
+        return cmake
+
 
     def configure(self):
         if self.settings.os == "Windows":
@@ -59,49 +69,36 @@ class FollyConan(ConanFile):
                 if compiler_version < "8.0":
                     raise ConanInvalidConfiguration("The minimal apple-clang version is 8.0")
 
+
     def requirements(self):
         if self.settings.os == "Linux":
-            self.requires("gflags/2.2.2")
             self.requires("libunwind/1.3.1@bincrafters/stable")
             if self.settings.compiler == "gcc":
                 self.requires("libiberty/9.1.0@bincrafters/stable")
 
-        if self.settings.os == "Macos":
-            self.requires("gflags/2.2.2@bincrafters/stable")
-
-    @property
-    def _source_folder_name(self):
-        return "sources"
-
-    @property
-    def _source_folder_path(self):
-        return (self.source_folder + ("/" + self._source_folder_name))
 
     def source(self):
         tools.get("{0}/archive/v{1}.tar.gz".format(self.homepage, self.version))
         extracted_dir = self.name + '-' + self.version
-        os.rename(extracted_dir, self._source_folder_name)
+        os.rename(extracted_dir, self._source_subfolder)
 
-    def _configure_cmake(self):
-        cmake = CMake(self)
-        cmake.configure(source_folder=self._source_folder_path)
-        return cmake
 
     def build(self):
-        tools.patch(base_path=self._source_folder_path, patch_file='patches/folly-deps-fix.patch')
+        tools.patch(base_path=self._source_subfolder_path, patch_file='patches/folly-deps-fix.patch')
         cmake = self._configure_cmake()
         cmake.build()
 
+
     def package(self):
-        self.copy(pattern="LICENSE", dst="licenses", src=self._source_folder_name)
+        self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
         cmake = self._configure_cmake()
         cmake.install()
+
 
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self) + ["folly"]
         if self.settings.os == "Linux":
             self.cpp_info.libs.extend(["pthread", "m", "dl"])
 
-            if self.settings.compiler == "clang":
-                if self.settings.compiler.libcxx == "libstdc++":
-                    self.cpp_info.libs.append("atomic")
+            if self.settings.compiler == "clang" and self.settings.compiler.libcxx == "libstdc++":
+                self.cpp_info.libs.append("atomic")
