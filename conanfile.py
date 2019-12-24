@@ -24,7 +24,7 @@ class FollyConan(ConanFile):
         "lzma/5.2.4@bincrafters/stable",
         "zlib/1.2.11",
         "zstd/1.4.3",
-        "openssl/1.1.1d",
+        "openssl/1.0.2t",
         "libelf/0.8.13",
         "libdwarf/20190505@bincrafters/stable",
         "libsodium/1.0.18@bincrafters/stable"
